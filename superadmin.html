@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>⛧ KURABI_SUPERADMIN ⛧</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #0a0f1e 0%, #0d1225 100%);
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header {
+            border-bottom: 2px solid #ff0040;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .title { color: #ff0040; font-size: 1.5rem; text-shadow: 0 0 10px #ff0040; }
+        .title span { color: #00ff41; }
+        .header-right { display: flex; gap: 15px; align-items: center; }
+        .access-badge { color: #ff0040; border: 1px solid #ff0040; padding: 5px 15px; border-radius: 25px; }
+        .lang-btn { background: transparent; border: 1px solid #ff0040; color: #ff0040; padding: 5px 15px; border-radius: 25px; cursor: pointer; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; }
+        .tab { background: transparent; border: 1px solid #00ff41; color: #00ff41; padding: 10px 25px; cursor: pointer; border-radius: 40px; }
+        .tab.active { background: #00ff41; color: #000; }
+        .tab-danger { border-color: #ff0040; color: #ff0040; }
+        .tab-danger.active { background: #ff0040; color: #fff; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .stats-grid { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 25px; }
+        .stat-card { background: rgba(10,10,10,0.9); border: 1px solid #00ff41; border-radius: 12px; padding: 20px; flex: 1; text-align: center; }
+        .stat-card h4 { color: #00ff41; font-size: 0.7rem; }
+        .stat-card .value { color: #ff0040; font-size: 1.8rem; font-weight: bold; }
+        .search-box { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .search-box input { background: #1f1f1f; border: 1px solid #00ff41; color: #00ff41; padding: 10px; width: 300px; border-radius: 40px; }
+        .search-box button { background: #00ff41; border: none; padding: 10px 20px; border-radius: 40px; cursor: pointer; font-weight: bold; }
+        .table-wrapper { overflow-x: auto; max-height: 550px; overflow-y: auto; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
+        .data-table th, .data-table td { border: 1px solid #00ff41; padding: 8px; text-align: left; }
+        .data-table th { background: #0a0a0a; color: #00ff41; position: sticky; top: 0; }
+        .ban-btn { background: #ff0040; color: #fff; border: none; padding: 4px 12px; border-radius: 15px; cursor: pointer; }
+        .unban-btn { background: #00ff41; color: #000; border: none; padding: 4px 12px; border-radius: 15px; cursor: pointer; }
+        .delete-btn { background: #ff8800; color: #000; border: none; padding: 4px 12px; border-radius: 15px; cursor: pointer; margin-left: 5px; }
+        .edit-btn { background: #00aaff; color: #fff; border: none; padding: 4px 12px; border-radius: 15px; cursor: pointer; margin-right: 5px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #0a0a0a; border: 2px solid #00ff41; border-radius: 16px; padding: 30px; width: 450px; max-width: 90%; }
+        .modal-content input, .modal-content select { width: 100%; background: #1f1f1f; border: 1px solid #00ff41; color: #00ff41; padding: 12px; margin-bottom: 15px; border-radius: 8px; font-family: monospace; }
+        .modal-content button { background: #00ff41; border: none; padding: 12px; border-radius: 40px; cursor: pointer; font-weight: bold; width: 100%; }
+        .close { color: #ff0040; float: right; font-size: 28px; cursor: pointer; }
+        .close:hover { color: #fff; }
+        body.rtl .data-table th, body.rtl .data-table td { text-align: right; }
+        .export-btn { background: #ffaa00; color: #000; border: none; padding: 10px 20px; border-radius: 40px; cursor: pointer; font-weight: bold; margin-left: 10px; }
+        .import-btn { background: #00aaff; color: #000; border: none; padding: 10px 20px; border-radius: 40px; cursor: pointer; font-weight: bold; margin-left: 10px; }
+        .add-btn { background: #00ff41; color: #000; border: none; padding: 10px 25px; border-radius: 40px; cursor: pointer; font-weight: bold; margin-bottom: 20px; }
+        @media (max-width: 768px) { .data-table th, .data-table td { font-size: 0.55rem; padding: 4px; } .search-box input { width: 100%; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="title">⛧ <span>KURABI</span>_SUPERADMIN ⛧</div>
+        <div class="header-right">
+            <div class="access-badge" id="accessText">⚡ SUPER ADMIN PANEL</div>
+            <button class="lang-btn" id="langBtn">🇸🇦 العربية</button>
+        </div>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab active" data-tab="users">👥 USERS</button>
+        <button class="tab" data-tab="banned">🚫 BANNED USERS</button>
+        <button class="tab tab-danger" data-tab="stats">📊 STATS</button>
+    </div>
+    
+    <div id="usersPanel" class="panel active">
+        <div class="stats-grid">
+            <div class="stat-card"><h4>TOTAL USERS</h4><div class="value" id="totalUsers">0</div></div>
+            <div class="stat-card"><h4>ACTIVE USERS</h4><div class="value" id="activeUsers">0</div></div>
+            <div class="stat-card"><h4>BANNED USERS</h4><div class="value" id="bannedUsersCount">0</div></div>
+        </div>
+        
+        <button class="add-btn" id="addUserBtn">➕ ADD NEW USER</button>
+        
+        <div class="search-box">
+            <input type="text" id="userSearch" placeholder="Search by name, email, ID...">
+            <button id="searchBtn">🔍 SEARCH</button>
+            <button id="exportBtn" class="export-btn">📥 EXPORT</button>
+            <button id="importBtn" class="import-btn">📂 IMPORT</button>
+        </div>
+        
+        <div class="table-wrapper">
+            <table class="data-table" id="userTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>NAME</th>
+                        <th>EMAIL</th>
+                        <th>PASSWORD</th>
+                        <th>ROLE</th>
+                        <th>STATUS</th>
+                        <th>CREATED</th>
+                        <th>ACTION</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div id="bannedPanel" class="panel">
+        <div class="stats-grid">
+            <div class="stat-card"><h4>BANNED USERS</h4><div class="value" id="bannedListCount">0</div></div>
+        </div>
+        <div class="table-wrapper">
+            <table class="data-table" id="bannedTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>NAME</th>
+                        <th>EMAIL</th>
+                        <th>BAN REASON</th>
+                        <th>BANNED DATE</th>
+                        <th>ACTION</th>
+                    </tr>
+                </thead>
+                <tbody id="bannedTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div id="statsPanel" class="panel">
+        <div class="stats-grid">
+            <div class="stat-card"><h4>TOTAL USERS</h4><div class="value" id="statTotalUsers">0</div></div>
+            <div class="stat-card"><h4>ACTIVE USERS</h4><div class="value" id="statActiveUsers">0</div></div>
+            <div class="stat-card"><h4>BANNED USERS</h4><div class="value" id="statBannedUsers">0</div></div>
+            <div class="stat-card"><h4>ADMINS</h4><div class="value" id="statAdmins">0</div></div>
+            <div class="stat-card"><h4>SUPER ADMINS</h4><div class="value" id="statSuperAdmins">0</div></div>
+        </div>
+        <div class="stats-grid" style="margin-top: 20px;">
+            <div class="stat-card"><h4>DATABASE SIZE</h4><div class="value" id="dbSize">0 KB</div></div>
+            <div class="stat-card"><h4>LAST BACKUP</h4><div class="value" id="lastBackup">NEVER</div></div>
+        </div>
+        <div style="display: flex; gap: 15px; margin-top: 25px; justify-content: center; flex-wrap: wrap;">
+            <button id="backupBtn" class="add-btn" style="background: #ffaa00;">💾 BACKUP DATA</button>
+            <button id="resetBtn" class="add-btn" style="background: #ff0040;">⚠️ RESET ALL</button>
+        </div>
+    </div>
+</div>
+
+<div id="addUserModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeModal">&times;</span>
+        <h3 style="color:#00ff41; margin-bottom:20px;">➕ ADD NEW USER</h3>
+        <input type="text" id="newUserName" placeholder="Full Name">
+        <input type="email" id="newUserEmail" placeholder="Email">
+        <input type="password" id="newUserPassword" placeholder="Password">
+        <select id="newUserRole">
+            <option value="user">👤 User</option>
+            <option value="admin">👑 Admin</option>
+            <option value="superadmin">⚡ Super Admin</option>
+        </select>
+        <button id="saveUserBtn">💾 SAVE USER</button>
+    </div>
+</div>
+
+<div id="editUserModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeEditModal">&times;</span>
+        <h3 style="color:#00aaff; margin-bottom:20px;">✏️ EDIT USER</h3>
+        <input type="hidden" id="editUserId">
+        <input type="text" id="editUserName" placeholder="Full Name">
+        <input type="email" id="editUserEmail" placeholder="Email">
+        <input type="password" id="editUserPassword" placeholder="Password (leave empty to keep same)">
+        <select id="editUserRole">
+            <option value="user">👤 User</option>
+            <option value="admin">👑 Admin</option>
+            <option value="superadmin">⚡ Super Admin</option>
+        </select>
+        <button id="updateUserBtn">💾 UPDATE USER</button>
+    </div>
+</div>
+
+<div id="banModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeBanModal">&times;</span>
+        <h3 style="color:#ff0040; margin-bottom:20px;">🚫 BAN USER</h3>
+        <p id="banUserName" style="color:#00ff41; margin-bottom:15px;"></p>
+        <input type="text" id="banReason" placeholder="Ban Reason">
+        <button id="confirmBanBtn">🔨 CONFIRM BAN</button>
+    </div>
+</div>
+
+<script>
+    let users = [];
+    let currentBanUser = null;
+    let currentEditUser = null;
+    let currentLang = localStorage.getItem('superadmin_lang') || 'en';
+    
+    const translations = {
+        en: {
+            superPanel: "⚡ SUPER ADMIN PANEL", users: "👥 USERS", banned: "🚫 BANNED USERS", stats: "📊 STATS",
+            totalUsers: "TOTAL USERS", activeUsers: "ACTIVE USERS", bannedUsers: "BANNED USERS",
+            admins: "ADMINS", superAdmins: "SUPER ADMINS", dbSize: "DATABASE SIZE", lastBackup: "LAST BACKUP",
+            backup: "💾 BACKUP DATA", reset: "⚠️ RESET ALL", addUser: "➕ ADD NEW USER",
+            search: "🔍 SEARCH", export: "📥 EXPORT", import: "📂 IMPORT",
+            id: "ID", name: "NAME", email: "EMAIL", password: "PASSWORD", role: "ROLE", status: "STATUS", created: "CREATED", action: "ACTION",
+            ban: "BAN", unban: "UNBAN", delete: "DELETE", edit: "EDIT", active: "ACTIVE", bannedStatus: "BANNED",
+            banReason: "BAN REASON", bannedDate: "BANNED DATE", save: "💾 SAVE USER", update: "💾 UPDATE USER", confirmBan: "🔨 CONFIRM BAN",
+            user: "User", admin: "Admin", superadmin: "Super Admin", noReason: "No reason"
+        },
+        ar: {
+            superPanel: "⚡ لوحة المشرف العام", users: "👥 المستخدمين", banned: "🚫 المحظورين", stats: "📊 إحصائيات",
+            totalUsers: "إجمالي المستخدمين", activeUsers: "النشطين", bannedUsers: "المحظورين",
+            admins: "المشرفين", superAdmins: "المشرفين العامين", dbSize: "حجم قاعدة البيانات", lastBackup: "آخر نسخة احتياطية",
+            backup: "💾 نسخ احتياطي", reset: "⚠️ إعادة تعيين الكل", addUser: "➕ إضافة مستخدم",
+            search: "🔍 بحث", export: "📥 تصدير", import: "📂 استيراد",
+            id: "المعرف", name: "الاسم", email: "البريد", password: "كلمة المرور", role: "الدور", status: "الحالة", created: "تاريخ الإنشاء", action: "إجراء",
+            ban: "حظر", unban: "إلغاء الحظر", delete: "حذف", edit: "تعديل", active: "نشط", bannedStatus: "محظور",
+            banReason: "سبب الحظر", bannedDate: "تاريخ الحظر", save: "💾 حفظ المستخدم", update: "💾 تحديث المستخدم", confirmBan: "🔨 تأكيد الحظر",
+            user: "مستخدم", admin: "مشرف", superadmin: "مشرف عام", noReason: "بدون سبب"
+        }
+    };
+    
+    function t(key) { return translations[currentLang][key] || translations.en[key]; }
+    
+    function applyLanguage() {
+        document.getElementById('accessText').innerText = t('superPanel');
+        document.querySelectorAll('.tab')[0].innerHTML = t('users');
+        document.querySelectorAll('.tab')[1].innerHTML = t('banned');
+        document.querySelectorAll('.tab')[2].innerHTML = t('stats');
+        document.getElementById('addUserBtn').innerHTML = t('addUser');
+        document.getElementById('searchBtn').innerHTML = t('search');
+        document.getElementById('exportBtn').innerHTML = t('export');
+        document.getElementById('importBtn').innerHTML = t('import');
+        document.getElementById('backupBtn').innerHTML = t('backup');
+        document.getElementById('resetBtn').innerHTML = t('reset');
+        document.getElementById('saveUserBtn').innerHTML = t('save');
+        document.getElementById('updateUserBtn').innerHTML = t('update');
+        document.getElementById('confirmBanBtn').innerHTML = t('confirmBan');
+        document.getElementById('langBtn').innerHTML = currentLang === 'en' ? '🇸🇦 العربية' : '🇬🇧 English';
+        document.body.classList.toggle('rtl', currentLang === 'ar');
+        document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+        renderUserTable();
+        renderBannedTable();
+        updateStats();
+    }
+    
+    function setLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('superadmin_lang', lang);
+        applyLanguage();
+    }
+    
+    function loadData() {
+        const saved = localStorage.getItem('kurabi_super_users');
+        if (saved && saved !== 'undefined') {
+            try {
+                users = JSON.parse(saved);
+            } catch(e) { users = getDefaultUsers(); }
+        } else {
+            users = getDefaultUsers();
+        }
+        renderUserTable();
+        renderBannedTable();
+        updateStats();
+    }
+    
+    function getDefaultUsers() {
+        return [
+            { id: '1', name: 'Kurabi Admin', email: 'admin@kurabi.com', password: 'admin123', role: 'superadmin', status: 'active', createdAt: new Date().toISOString(), bannedReason: null, bannedAt: null },
+            { id: '2', name: 'Test User', email: 'user@test.com', password: 'user123', role: 'user', status: 'active', createdAt: new Date().toISOString(), bannedReason: null, bannedAt: null },
+            { id: '3', name: 'John Doe', email: 'john@example.com', password: 'john123', role: 'user', status: 'active', createdAt: new Date().toISOString(), bannedReason: null, bannedAt: null },
+            { id: '4', name: 'Admin User', email: 'admin2@test.com', password: 'admin123', role: 'admin', status: 'active', createdAt: new Date().toISOString(), bannedReason: null, bannedAt: null }
+        ];
+    }
+    
+    function saveData() {
+        localStorage.setItem('kurabi_super_users', JSON.stringify(users));
+        updateStats();
+    }
+    
+    function updateStats() {
+        const total = users.length;
+        const active = users.filter(u => u.status === 'active').length;
+        const banned = users.filter(u => u.status === 'banned').length;
+        const admins = users.filter(u => u.role === 'admin' && u.status === 'active').length;
+        const superAdmins = users.filter(u => u.role === 'superadmin' && u.status === 'active').length;
+        
+        document.getElementById('totalUsers').innerText = total;
+        document.getElementById('activeUsers').innerText = active;
+        document.getElementById('bannedUsersCount').innerText = banned;
+        document.getElementById('bannedListCount').innerText = banned;
+        document.getElementById('statTotalUsers').innerText = total;
+        document.getElementById('statActiveUsers').innerText = active;
+        document.getElementById('statBannedUsers').innerText = banned;
+        document.getElementById('statAdmins').innerText = admins;
+        document.getElementById('statSuperAdmins').innerText = superAdmins;
+        
+        const dataStr = JSON.stringify(users);
+        const sizeKB = (new Blob([dataStr]).size / 1024).toFixed(2);
+        document.getElementById('dbSize').innerText = sizeKB + ' KB';
+    }
+    
+    function renderUserTable() {
+        const search = document.getElementById('userSearch')?.value.toLowerCase() || '';
+        const activeUsers = users.filter(u => u.status !== 'banned');
+        const searched = activeUsers.filter(u => 
+            u.name.toLowerCase().includes(search) || 
+            u.email.toLowerCase().includes(search) || 
+            u.id.includes(search)
+        );
+        
+        const tbody = document.getElementById('userTableBody');
+        tbody.innerHTML = '';
+        
+        for (let user of searched) {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = user.id;
+            row.insertCell(1).innerText = user.name;
+            row.insertCell(2).innerText = user.email;
+            row.insertCell(3).innerText = '••••••';
+            row.insertCell(4).innerHTML = user.role === 'superadmin' ? '<span style="color:#ff0040;">⚡ SUPERADMIN</span>' : (user.role === 'admin' ? '<span style="color:#ffaa00;">👑 ADMIN</span>' : '<span style="color:#00ff41;">👤 USER</span>');
+            row.insertCell(5).innerHTML = '<span style="color:#00ff41;">● ' + t('active') + '</span>';
+            row.insertCell(6).innerText = new Date(user.createdAt).toLocaleDateString();
+            
+            const actionCell = row.insertCell(7);
+            
+            const editBtn = document.createElement('button');
+            editBtn.innerText = t('edit');
+            editBtn.className = 'edit-btn';
+            editBtn.onclick = () => showEditModal(user);
+            actionCell.appendChild(editBtn);
+            
+            if (user.role !== 'superadmin') {
+                const banBtn = document.createElement('button');
+                banBtn.innerText = t('ban');
+                banBtn.className = 'ban-btn';
+                banBtn.onclick = () => showBanModal(user);
+                actionCell.appendChild(banBtn);
+            }
+            
+            if (user.role !== 'superadmin') {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerText = t('delete');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.onclick = () => deleteUser(user.id);
+                actionCell.appendChild(deleteBtn);
+            }
+        }
+    }
+    
+    function renderBannedTable() {
+        const banned = users.filter(u => u.status === 'banned');
+        const tbody = document.getElementById('bannedTableBody');
+        tbody.innerHTML = '';
+        
+        for (let user of banned) {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = user.id;
+            row.insertCell(1).innerText = user.name;
+            row.insertCell(2).innerText = user.email;
+            row.insertCell(3).innerText = user.bannedReason || t('noReason');
+            row.insertCell(4).innerText = user.bannedAt ? new Date(user.bannedAt).toLocaleDateString() : '?';
+            
+            const actionCell = row.insertCell(5);
+            const unbanBtn = document.createElement('button');
+            unbanBtn.innerText = t('unban');
+            unbanBtn.className = 'unban-btn';
+            unbanBtn.onclick = () => unbanUser(user.id);
+            actionCell.appendChild(unbanBtn);
+        }
+    }
+    
+    function addUser() {
+        const name = document.getElementById('newUserName').value.trim();
+        const email = document.getElementById('newUserEmail').value.trim();
+        const password = document.getElementById('newUserPassword').value.trim();
+        const role = document.getElementById('newUserRole').value;
+        
+        if (!name || !email || !password) {
+            alert('Please fill all fields!');
+            return false;
+        }
+        
+        if (users.find(u => u.email === email)) {
+            alert('Email already exists!');
+            return false;
+        }
+        
+        const newId = Date.now().toString();
+        const newUser = {
+            id: newId,
+            name: name,
+            email: email,
+            password: password,
+            role: role,
+            status: 'active',
+            createdAt: new Date().toISOString(),
+            bannedReason: null,
+            bannedAt: null
+        };
+        users.push(newUser);
+        saveData();
+        renderUserTable();
+        renderBannedTable();
+        updateStats();
+        return true;
+    }
+    
+    function updateUser() {
+        const userId = document.getElementById('editUserId').value;
+        const user = users.find(u => u.id === userId);
+        if (!user) return false;
+        
+        const name = document.getElementById('editUserName').value.trim();
+        const email = document.getElementById('editUserEmail').value.trim();
+        const password = document.getElementById('editUserPassword').value.trim();
+        const role = document.getElementById('editUserRole').value;
+        
+        if (!name || !email) {
+            alert('Name and email are required!');
+            return false;
+        }
+        
+        if (email !== user.email && users.find(u => u.email === email)) {
+            alert('Email already exists!');
+            return false;
+        }
+        
+        user.name = name;
+        user.email = email;
+        if (password) user.password = password;
+        user.role = role;
+        
+        saveData();
+        renderUserTable();
+        renderBannedTable();
+        updateStats();
+        return true;
+    }
+    
+    function banUser(userId, reason) {
+        const user = users.find(u => u.id === userId);
+        if (user && user.role !== 'superadmin') {
+            user.status = 'banned';
+            user.bannedReason = reason || 'No reason';
+            user.bannedAt = new Date().toISOString();
+            saveData();
+            renderUserTable();
+            renderBannedTable();
+            updateStats();
+        }
+    }
+    
+    function unbanUser(userId) {
+        const user = users.find(u => u.id === userId);
+        if (user) {
+            user.status = 'active';
+            user.bannedReason = null;
+            user.bannedAt = null;
+            saveData();
+            renderUserTable();
+            renderBannedTable();
+            updateStats();
+        }
+    }
+    
+    function deleteUser(userId) {
+        const user = users.find(u => u.id === userId);
+        if (user && user.role !== 'superadmin') {
+            if (confirm(`Delete ${user.name}?`)) {
+                users = users.filter(u => u.id !== userId);
+                saveData();
+                renderUserTable();
+                renderBannedTable();
+                updateStats();
+            }
+        } else if (user && user.role === 'superadmin') {
+            alert('Cannot delete Super Admin!');
+        }
+    }
+    
+    function resetAll() {
+        if (confirm('⚠️ THIS WILL DELETE ALL DATA! Are you sure?')) {
+            if (confirm('LAST WARNING! All users will be lost. Confirm?')) {
+                users = getDefaultUsers();
+                saveData();
+                renderUserTable();
+                renderBannedTable();
+                updateStats();
+                alert('All data reset to default.');
+            }
+        }
+    }
+    
+    function backupData() {
+        const dataStr = JSON.stringify(users, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `kurabi_users_backup_${new Date().toISOString().slice(0,19)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById('lastBackup').innerText = new Date().toLocaleString();
+        localStorage.setItem('kurabi_last_backup', new Date().toISOString());
+        alert('Backup saved!');
+    }
+    
+    function importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    if (Array.isArray(imported)) {
+                        users = imported;
+                        saveData();
+                        renderUserTable();
+                        renderBannedTable();
+                        updateStats();
+                        alert('Data imported successfully!');
+                    } else {
+                        alert('Invalid file format!');
+                    }
+                } catch(err) {
+                    alert('Error reading file: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+    
+    function exportData() {
+        const dataStr = JSON.stringify(users, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `kurabi_users_export_${new Date().toISOString().slice(0,19)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        alert('Data exported!');
+    }
+    
+    function showBanModal(user) {
+        currentBanUser = user;
+        document.getElementById('banUserName').innerHTML = `Ban: ${user.name} (${user.email})`;
+        document.getElementById('banReason').value = '';
+        document.getElementById('banModal').style.display = 'flex';
+    }
+    
+    function showEditModal(user) {
+        currentEditUser = user;
+        document.getElementById('editUserId').value = user.id;
+        document.getElementById('editUserName').value = user.name;
+        document.getElementById('editUserEmail').value = user.email;
+        document.getElementById('editUserPassword').value = '';
+        document.getElementById('editUserRole').value = user.role;
+        document.getElementById('editUserModal').style.display = 'flex';
+    }
+    
+    document.getElementById('addUserBtn').onclick = () => {
+        document.getElementById('newUserName').value = '';
+        document.getElementById('newUserEmail').value = '';
+        document.getElementById('newUserPassword').value = '';
+        document.getElementById('newUserRole').value = 'user';
+        document.getElementById('addUserModal').style.display = 'flex';
+    };
+    
+    document.getElementById('saveUserBtn').onclick = () => {
+        if (addUser()) {
+            document.getElementById('addUserModal').style.display = 'none';
+        }
+    };
+    
+    document.getElementById('updateUserBtn').onclick = () => {
+        if (updateUser()) {
+            document.getElementById('editUserModal').style.display = 'none';
+        }
+    };
+    
+    document.getElementById('confirmBanBtn').onclick = () => {
+        if (currentBanUser) {
+            const reason = document.getElementById('banReason').value.trim();
+            banUser(currentBanUser.id, reason);
+            document.getElementById('banModal').style.display = 'none';
+            currentBanUser = null;
+        }
+    };
+    
+    document.getElementById('searchBtn').onclick = () => renderUserTable();
+    document.getElementById('userSearch').addEventListener('input', () => renderUserTable());
+    document.getElementById('exportBtn').onclick = () => exportData();
+    document.getElementById('importBtn').onclick = () => importData();
+    document.getElementById('backupBtn').onclick = () => backupData();
+    document.getElementById('resetBtn').onclick = () => resetAll();
+    document.getElementById('langBtn').onclick = () => setLanguage(currentLang === 'en' ? 'ar' : 'en');
+    
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.onclick = () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab + 'Panel').classList.add('active');
+            if (tab.dataset.tab === 'banned') renderBannedTable();
+            if (tab.dataset.tab === 'stats') updateStats();
+        };
+    });
+    
+    document.getElementById('closeModal').onclick = () => document.getElementById('addUserModal').style.display = 'none';
+    document.getElementById('closeEditModal').onclick = () => document.getElementById('editUserModal').style.display = 'none';
+    document.getElementById('closeBanModal').onclick = () => document.getElementById('banModal').style.display = 'none';
+    
+    window.onclick = (e) => {
+        if (e.target === document.getElementById('addUserModal')) document.getElementById('addUserModal').style.display = 'none';
+        if (e.target === document.getElementById('editUserModal')) document.getElementById('editUserModal').style.display = 'none';
+        if (e.target === document.getElementById('banModal')) document.getElementById('banModal').style.display = 'none';
+    };
+    
+    const lastBackupTime = localStorage.getItem('kurabi_last_backup');
+    if (lastBackupTime) document.getElementById('lastBackup').innerText = new Date(lastBackupTime).toLocaleString();
+    
+    loadData();
+    applyLanguage();
+</script>
+</body>
+</html>
